@@ -1,0 +1,134 @@
+#include <Adafruit_NeoPixel.h>
+
+#define PIN 3 // номер порта к которому подключен модуль
+#define count_led 16 // количество светодиодов 
+Adafruit_NeoPixel pixels = Adafruit_NeoPixel(count_led, PIN, NEO_GRB + NEO_KHZ800); //first number change does distance 
+
+int R = 0;
+int G = 0;
+int B = 0;
+
+int button = 0;
+
+int game_time = 100;
+
+void(* resetFunc) (void) = 0; // объявляем функцию reset
+
+void setup()
+{
+  Serial.begin(9600);
+  pinMode(2, INPUT);
+    
+  pixels.begin();
+  pixels.setBrightness(20);
+  
+  for(int i = 0; i < count_led; i++){
+    pixels.setPixelColor(i, pixels.Color(255,0,0)); // RGB CREATE RED-YELLOW-GREEN
+    pixels.show();
+    delay(100);    
+  }  
+  
+  for(int i = 0; i < count_led; i++){
+    pixels.setPixelColor(i, pixels.Color(0,0,0)); 
+    pixels.show();
+    delay(100);    
+  }  
+  
+  
+
+}
+
+void loop()
+{
+  button = digitalRead(2);
+  Serial.println(button);
+
+  left_going(game_time);
+  right_going(game_time);
+  
+  
+   
+  
+ 
+}
+
+
+
+void pixelWrite(int i, int R, int G, int B)
+{
+  pixels.setPixelColor(i, pixels.Color(R,G,B)); 
+  pixels.show();  
+}
+
+void win_lose(int R, int G, int B)
+{
+  for(int k = 1; k < 4;k++)
+  {
+    for(int i = 0; i < count_led; i++){
+      pixelWrite(i, R, G, B);
+    }  
+    delay(400);
+    for(int i = 0; i < count_led; i++){
+      pixelWrite(i, 0, 0, 0);
+    }
+    delay(400);
+  }
+}
+
+
+void left_going(int int_time)
+{
+  int win_var = 0;
+  
+  for(int i = 0; i < count_led; i++){
+    pixelWrite(i, 255, 0, 0);
+    delay(int_time); 
+    // ----------------
+    
+    if(digitalRead(2)==HIGH && i==15){
+      win_lose(0,255,0);// загораются победные диоды
+      win_var = 1;
+      game_time = game_time - 5;
+    }else if(digitalRead(2)==HIGH && i<15 ){
+      win_lose(255,0,0);// загораются проигрышные диоды
+      win_var = 1;
+      resetFunc(); //вызываем reset
+    }
+
+    if(i==15 && win_var==0){
+      win_lose(255,0,0);// загораются проигрышные диоды
+      resetFunc(); //вызываем reset
+    }
+    // ----------------
+    pixelWrite(i, 0, 0, 0);
+  }
+}
+
+void right_going(int int_time)
+{
+  int win_var = 0;
+    
+  for(int i = count_led-1; i >= 0; i--){
+    pixelWrite(i, 255, 0, 0);
+    delay(int_time); 
+    // ----------------
+    if(digitalRead(2)==HIGH && i==0){
+      win_lose(0,255,0);// загораются победные диоды
+      win_var = 1;
+      game_time = game_time - 5;
+    }else if(digitalRead(2)==HIGH && i>0){
+      win_lose(255,0,0);// загораются проигрышные диоды
+      win_var = 1;
+      resetFunc(); //вызываем reset
+    }
+
+    if(i==0 && win_var==0){
+      win_lose(255,0,0);// загораются проигрышные диоды
+      resetFunc(); //вызываем reset
+    }
+    // ----------------   
+    pixelWrite(i, 0, 0, 0);
+  } 
+}
+
+
